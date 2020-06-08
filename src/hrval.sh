@@ -40,6 +40,15 @@ function download {
   echo ${CHART_DIR}
 }
 
+function copy_local {
+  CHART_PATH=$(yq r ${1} spec.chart.path)
+  DEST_PATH=${2}/${CHART_PATH}
+  mkdir -p ${DEST_PATH}
+  cp -ar ${GITHUB_WORKSPACE}/${CHART_PATH}/. ${DEST_PATH}
+ 
+  echo ${DEST_PATH}
+}
+
 function clone {
   ORIGIN=$(git rev-parse --show-toplevel)
   GIT_REPO=$(yq r ${1} spec.chart.git)
@@ -69,10 +78,15 @@ function validate {
 
   TMPDIR=$(mktemp -d)
   CHART_PATH=$(yq r ${HELM_RELEASE} spec.chart.path)
+  GIT_REPO=$(yq r ${HELM_RELEASE} spec.chart.git)
+  GIT_REF=$(yq r ${HELM_RELEASE} spec.chart.ref)
 
   if [[ -z "${CHART_PATH}" ]]; then
     echo "Downloading to ${TMPDIR}"
     CHART_DIR=$(download ${HELM_RELEASE} ${TMPDIR}| tail -n1)
+  elif echo $GIT_REPO | grep $GITHUB_REPOSITORY; then
+    echo "Copying local to ${TMPDIR}"
+    CHART_DIR=$(copy_local ${HELM_RELEASE} ${TMPDIR}| tail -n1)
   else
     echo "Cloning to ${TMPDIR}"
     CHART_DIR=$(clone ${HELM_RELEASE} ${TMPDIR}| tail -n1)

@@ -1,43 +1,41 @@
-name: 'Validate Flux Helm Release'
-description: 'Github Action to validate Flux Helm Releases with kubeval'
-author: 'Stefan Prodan'
+name: "Validate Flux Helm Release"
+description: "Github Action to validate Flux Helm Releases with kubeval"
+author: "SupplyPike"
 branding:
-  icon: 'check-square'
-  color: 'blue'
+  icon: "check-square"
+  color: "blue"
 inputs:
   helmRelease:
-    description: 'The HelmRelease YAML file path or dir'
+    description: "The HelmRelease YAML file path or dir"
     required: true
   ignoreValues:
-    description: 'When set to true HelmRelease values will be ignored'
-    default: 'false'
+    description: "When set to true HelmRelease values will be ignored"
+    default: "false"
+    required: false
   kubernetesVersion:
-    description: 'Version of Kubernetes to validate against'
-    default: 'master'
-  helmVersion:
-    description: 'Version of Helm to validate against'
-    default: 'v2'
+    description: "Version of Kubernetes to validate against"
+    default: "master"
+    required: true
   awsS3Repo:
-    description: '(Optional) Set to true if using an AWS S3 Helm Repo'
-    default: false
+    description: "(Optional) Set to true if using an AWS S3 Helm Repo"
+    default: "false"
+    required: false
   awsS3RepoName:
-    description: '(Optional) The name of the AWS S3 Helm repo, if awsS3Repo was set to true'
-    default: ''
+    description: "(Optional) The name of the AWS S3 Helm repo, if awsS3Repo was set to true"
+    default: ""
+    required: false
   awsS3Plugin:
-    description: '(Optional) AWS S3 Plugin to be used in the helm plugin install command'
-    default: ''
+    description: "(Optional) AWS S3 Plugin to be used in the helm plugin install command"
+    default: ""
+    required: false
 outputs:
   numFilesTested:
     description: The number of HelmRelease files which were tested
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - ${{ inputs.helmRelease }}
-    - ${{ inputs.ignoreValues }}
-    - ${{ inputs.kubernetesVersion }}
-    - ${{ inputs.helmVersion }}
-    - ${{ inputs.awsS3Repo }}
-    - ${{ inputs.awsS3RepoName }}
-    - ${{ inputs.awsS3RepoPlugin }}
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/src/deps.sh
+      shell: bash
+    - run: ${{ github.action_path }}/src/hrval-all.sh ${{ inputs.helmRelease }} ${{ inputs.ignoreValues }} ${{ inputs.kubernetesVersion }} ${{ inputs.awsS3Repo }} ${{ inputs.awsS3RepoName }} ${{ inputs.awsS3Plugin }}
+      shell: bash

@@ -9,10 +9,10 @@ Kubernetes custom resources with [kubeval](https://github.com/instrumenta/kubeva
 
 Steps:
 
-- installs kubectl, yq, kubeval, helm v2 and v3
-- extracts the chart source with yq
+- installs kubeval
+- extracts the chart source
 - downloads the chart from the Helm or Git repository
-- extracts the Helm Release values with yq
+- extracts the Helm Release values
 - runs helm template for the extracted values
 - validates the YAMLs using kubeval strict mode
 

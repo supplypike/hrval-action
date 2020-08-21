@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 
 import yaml from "js-yaml";
 import { get as _get } from "lodash";
+import { exec } from "@actions/exec";
 
 const { readFile, writeFile, stat } = fs;
 
@@ -43,4 +44,29 @@ export async function yw(file: string, content: JSON): Promise<void> {
   const doc = yaml.safeDump(content);
 
   await writeFile(file, doc);
+}
+
+export async function execWithOutput(
+  cmd: string,
+  args: string[]
+): Promise<string> {
+  let output = "";
+  let error = "";
+  const options = {
+    listeners: {
+      stdout: (data: Buffer) => {
+        output += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        error += data.toString();
+      },
+    },
+  };
+
+  await exec(cmd, args, options);
+  if (error) {
+    throw new Error(error);
+  }
+
+  return output;
 }

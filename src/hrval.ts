@@ -3,10 +3,10 @@ import globby from "globby";
 import * as path from "path";
 import { promises as fs } from "fs";
 
-import { isFile } from "./utils";
+import { isFile, execWithOutput } from "./utils";
 import { Release } from "./release";
-import { Helm } from "./tools";
 import os from "os";
+import { exec } from "@actions/exec";
 
 interface Validatable {
   helmRelease: string;
@@ -14,10 +14,6 @@ interface Validatable {
   ignoreValues: boolean;
   kubeVersion: string;
   gitToken: string;
-
-  // dep injection
-  kubeval: (...args: string[]) => Promise<number>;
-  helm: Helm;
 }
 
 export async function hrval(v: Validatable): Promise<boolean> {
@@ -50,15 +46,20 @@ async function validateAll({
   return true;
 }
 
-async function validate({
-  helmRelease,
-  currentRepo,
-  ignoreValues,
-  kubeVersion,
-  gitToken,
-  helm,
-  kubeval,
-}: Validatable): Promise<boolean> {
+export async function validate(
+  {
+    helmRelease,
+    currentRepo,
+    ignoreValues,
+    kubeVersion,
+    gitToken,
+  }: Validatable,
+  // dep injection
+  kubeval: (...args: string[]) => Promise<number> = (...args) =>
+    exec("kubeval", args),
+  helm: (...args: string[]) => Promise<string> = (...args) =>
+    execWithOutput("helm", args)
+): Promise<boolean> {
   const r = new Release(helmRelease, gitToken, helm);
 
   if (!(await r.isHelmRelease())) {
@@ -66,64 +67,58 @@ async function validate({
     return true;
   }
 
-  let chartDir: string;
-  try {
-    chartDir = await r.getChart(currentRepo);
-  } catch (error) {
-    core.error(error);
-    return false;
-  }
-
   const namespace = await r.getNamespace();
   const releaseName = await r.getName();
-
-  if (!namespace) {
-    core.error("missing metadata.namespace");
-    return false;
-  }
-
-  if (!releaseName) {
-    core.error("missing metadata.name");
-    return false;
-  }
-
   const dir = os.tmpdir();
   const releaseFile = path.join(dir, `${releaseName}.release.yaml`);
   const valuesFile = path.join(`${releaseName}.values.yaml`);
 
-  if (ignoreValues) {
-    core.info("Ignoring Helm release values");
-    await fs.writeFile(valuesFile, "");
-  } else {
-    core.info(`Extracting values to ${valuesFile}`);
-    const values = await r.getValues();
-    await fs.writeFile(valuesFile, values);
-  }
+  try {
+    const chartDir = await r.getChart(currentRepo);
 
-  if (!r.isRepoChart()) {
-    core.info(`Adding helm dependencies`);
-    await helm("dependency", "build", chartDir);
-  }
+    if (!namespace) {
+      core.error("missing metadata.namespace");
+      return false;
+    }
 
-  core.info(`Writing Helm release to ${releaseFile}`);
+    if (!releaseName) {
+      core.error("missing metadata.name");
+      return false;
+    }
 
-  const template = await helm(
-    "template",
-    releaseName,
-    chartDir,
-    "--namespace",
-    namespace,
-    "--skip-crds=true",
-    "-f",
-    valuesFile
-  );
+    if (ignoreValues) {
+      core.info("Ignoring Helm release values");
+      await fs.writeFile(valuesFile, "");
+    } else {
+      core.info(`Extracting values to ${valuesFile}`);
+      const values = await r.getValues();
+      await fs.writeFile(valuesFile, values);
+    }
 
-  if (template.error) {
-    core.error(template.error);
+    if (!r.isRepoChart()) {
+      core.info(`Adding helm dependencies`);
+      await helm("dependency", "build", chartDir);
+    }
+
+    core.info(`Writing Helm release to ${releaseFile}`);
+
+    const template = await helm(
+      "template",
+      releaseName,
+      chartDir,
+      "--namespace",
+      namespace,
+      "--skip-crds=true",
+      "-f",
+      valuesFile
+    );
+
+    await fs.writeFile(releaseFile, template);
+  } catch (error) {
+    console.log(error);
+    core.error(error.message);
     return false;
   }
-
-  await fs.writeFile(releaseFile, template.output);
 
   core.info(
     `Validating Helm release ${releaseName}.${namespace} against Kubernetes ${kubeVersion}`

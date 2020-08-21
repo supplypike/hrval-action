@@ -45,29 +45,3 @@ async function setupChartTesting() {
 
   core.addPath(cachedPath);
 }
-
-export type Helm = (
-  ...args: string[]
-) => Promise<{ error: string; output: string }>;
-
-export async function helm(
-  ...args: string[]
-): Promise<{ error: string; output: string }> {
-  let output = "";
-  let error = "";
-
-  const options = {
-    listeners: {
-      stdout: (data: Buffer) => {
-        output += data.toString();
-      },
-      stderr: (data: Buffer) => {
-        error += data.toString();
-      },
-    },
-  };
-
-  await exec.exec("kubeval", args, options);
-
-  return { output, error };
-}

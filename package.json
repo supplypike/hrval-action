@@ -29,16 +29,13 @@
     "@actions/exec": "^1.0.4",
     "@actions/tool-cache": "^1.6.0",
     "globby": "^11.0.1",
-    "isomorphic-git": "^1.7.4",
-    "lodash": "^4.17.20",
-    "nodegit": "^0.27.0"
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "@types/jest": "^26.0.7",
     "@types/js-yaml": "^3.12.5",
     "@types/lodash": "^4.14.159",
     "@types/node": "^14.0.25",
-    "@types/nodegit": "^0.26.7",
     "@typescript-eslint/parser": "^3.7.0",
     "@vercel/ncc": "^0.23.0",
     "eslint": "^7.5.0",

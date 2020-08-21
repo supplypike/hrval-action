@@ -1,18 +1,19 @@
 import os from "os";
-import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import * as git from "nodegit";
 
-import { yq } from "./utils";
-import { Helm } from "./tools";
+import { yq, execWithOutput } from "./utils";
 
 export class Release {
-  private helm: Helm;
+  private helm: (...args: string[]) => Promise<string>;
   private gitToken: string;
   private releasePath: string;
 
-  constructor(releasePath: string, gitToken: string, helm: Helm) {
+  constructor(
+    releasePath: string,
+    gitToken: string,
+    helm: (...args: string[]) => Promise<string>
+  ) {
     this.releasePath = releasePath;
     this.gitToken = gitToken;
     this.helm = helm;
@@ -90,17 +91,14 @@ export class Release {
 
   private async clone(url: string) {
     const ref = (await this.getValue("spec.chart.ref")) ?? "master";
-    const dir = os.tmpdir();
-
-    const repo = await git.Clone.clone(url, dir, {
-      fetchOpts: {
-        credentials: () => git.Cred.userpassPlaintextNew("", this.gitToken),
-      },
-    });
-    const gitRef = await repo.getReference(ref);
-    await repo.checkoutRef(gitRef);
 
     const chartPath = await this.getValue("spec.chart.path");
+
+    const dir = await execWithOutput("./src/clone.sh", [
+      url,
+      ref,
+      this.gitToken,
+    ]);
 
     return path.join(dir, chartPath ?? "");
   }

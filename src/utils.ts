@@ -1,8 +1,11 @@
-import { readFile, writeFile, stat } from "fs/promises";
+import { promises as fs } from "fs";
+
 import yaml from "js-yaml";
 import { get as _get } from "lodash";
 
-export async function isFile(path: string) {
+const { readFile, writeFile, stat } = fs;
+
+export async function isFile(path: string): Promise<boolean> {
   const stats = await stat(path);
   return stats.isFile();
 }

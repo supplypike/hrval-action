@@ -1,0 +1,54 @@
+{
+  "name": "hrval-action",
+  "version": "0.0.0",
+  "private": true,
+  "description": "action for running kubeval on flux deploys",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "package": "ncc build --source-map",
+    "test": "jest",
+    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/supplypike/hrval-action.git"
+  },
+  "keywords": [
+    "actions",
+    "fluxcd",
+    "helm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/exec": "^1.0.4",
+    "@actions/tool-cache": "^1.6.0",
+    "globby": "^11.0.1",
+    "isomorphic-git": "^1.7.4",
+    "lodash": "^4.17.20",
+    "nodegit": "^0.27.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.7",
+    "@types/js-yaml": "^3.12.5",
+    "@types/lodash": "^4.14.159",
+    "@types/node": "^14.0.25",
+    "@types/nodegit": "^0.26.7",
+    "@typescript-eslint/parser": "^3.7.0",
+    "@vercel/ncc": "^0.23.0",
+    "eslint": "^7.5.0",
+    "eslint-plugin-github": "^4.1.1",
+    "eslint-plugin-jest": "^23.18.0",
+    "jest": "^24.9.0",
+    "jest-circus": "^26.1.0",
+    "js-yaml": "^3.14.0",
+    "prettier": "2.0.5",
+    "ts-jest": "^24.3.0",
+    "typescript": "^3.9.7"
+  }
+}

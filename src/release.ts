@@ -1,34 +1,49 @@
 import os from "os";
+import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import * as exec from "@actions/exec";
+import * as git from "nodegit";
 
 import { yq } from "./utils";
+import { Helm } from "./tools";
 
 export class Release {
-  // eslint-disable-next-line no-unused-vars
-  constructor(private releasePath: string) {}
+  private helm: Helm;
+  private gitToken: string;
+  private releasePath: string;
 
-  public async isHelmRelease() {
+  constructor(releasePath: string, gitToken: string, helm: Helm) {
+    this.releasePath = releasePath;
+    this.gitToken = gitToken;
+    this.helm = helm;
+  }
+
+  public async isHelmRelease(): Promise<boolean> {
     return (await this.getValue("kind")) === "HelmRelease";
   }
 
   public async getChart(currentRepo: string): Promise<string> {
     const chartPath = await this.getValue("spec.chart.path");
     const gitRepo = await this.getValue("spec.chart.git");
-    const gitRef = await this.getValue("spec.chart.ref");
-
-    console.log({ chartPath, gitRepo, gitRef });
 
     if (!chartPath) {
       return await this.download();
+    }
+
+    if (!gitRepo) {
+      return chartPath;
     }
 
     if (gitRepo?.includes(currentRepo)) {
       return chartPath;
     }
 
-    return await this.clone();
+    return await this.clone(gitRepo);
+  }
+
+  public async isRepoChart(): Promise<boolean> {
+    const p = await this.getValue("spec.chart.path");
+    return (p ?? "").length > 0;
   }
 
   public async getNamespace(): Promise<string | undefined> {
@@ -58,19 +73,36 @@ export class Release {
     const dir = os.tmpdir();
     const repoName = crypto.createHash("md5").update(name).digest("hex");
 
-    await exec.exec(`helm repo add ${repoName} ${repo}`);
-    await exec.exec(`helm repo update`);
-    await exec.exec(
-      `helm fetch --version ${version} --untar ${repoName}/${name} --untardir ${dir}`
+    await this.helm("repo", "add", repoName, repo);
+    await this.helm("repo", "update");
+    await this.helm(
+      "fetch",
+      "--version",
+      version,
+      "--untar",
+      `${repoName}/${name}`,
+      "--untardir",
+      dir
     );
 
-    return path.join(os.tmpdir(), name);
+    return path.join(dir, name);
   }
 
-  private async clone() {
-    throw new Error("NOT YET IMPLEMENTED");
-    // eslint-disable-next-line no-unreachable
-    return "";
+  private async clone(url: string) {
+    const ref = (await this.getValue("spec.chart.ref")) ?? "master";
+    const dir = os.tmpdir();
+
+    const repo = await git.Clone.clone(url, dir, {
+      fetchOpts: {
+        credentials: () => git.Cred.userpassPlaintextNew("", this.gitToken),
+      },
+    });
+    const gitRef = await repo.getReference(ref);
+    await repo.checkoutRef(gitRef);
+
+    const chartPath = await this.getValue("spec.chart.path");
+
+    return path.join(dir, chartPath ?? "");
   }
 
   private getValue(p: string): Promise<string | undefined> {

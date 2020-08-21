@@ -4,7 +4,7 @@ test("it validates", async () => {
   const kubeval: any = jest.fn().mockResolvedValue(0);
   const helm: any = jest.fn().mockResolvedValue("");
 
-  const valid = await validate(
+  await validate(
     {
       helmRelease: "test/podinfo.yaml",
       currentRepo: "git@github.com:supplypike/hrval-action.git",
@@ -16,6 +16,4 @@ test("it validates", async () => {
     kubeval,
     helm
   );
-
-  expect(valid).toBe(true);
 });

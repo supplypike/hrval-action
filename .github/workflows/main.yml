@@ -7,9 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: azure/setup-helm@v1
-        with:
-          version: "v3.2.4"
       - name: Validate Helm Release from Helm Repo
         uses: ./
         with:
@@ -28,9 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: azure/setup-helm@v1
-        with:
-          version: "v3.2.4"
       - name: Validate all Helm Releases in the test dir
         id: validate-dir
         uses: ./

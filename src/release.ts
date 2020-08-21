@@ -24,8 +24,8 @@ export class Release {
   }
 
   public async getChart(currentRepo: string): Promise<string> {
-    const chartPath = await this.getValue("spec.chart.path");
-    const gitRepo = await this.getValue("spec.chart.git");
+    const chartPath = await this.getValue<string>("spec.chart.path");
+    const gitRepo = await this.getValue<string>("spec.chart.git");
 
     if (!chartPath) {
       return await this.download();
@@ -43,29 +43,29 @@ export class Release {
   }
 
   public async isRepoChart(): Promise<boolean> {
-    const p = await this.getValue("spec.chart.path");
+    const p = await this.getValue<string>("spec.chart.path");
     return (p ?? "").length > 0;
   }
 
   public async getNamespace(): Promise<string | undefined> {
-    return this.getValue("metadata.namespace");
+    return this.getValue<string>("metadata.namespace");
   }
 
   public async getName(): Promise<string | undefined> {
-    return this.getValue("metadata.name");
+    return this.getValue<string>("metadata.name");
   }
 
   public async getValues(): Promise<any> {
-    return this.getValue("spec.values");
+    return this.getValue<unknown>("spec.values");
   }
 
   /**
    * downloads a chart from a helm repo
    */
   private async download(): Promise<string> {
-    const repo = await this.getValue("spec.chart.repository");
-    const name = await this.getValue("spec.chart.name");
-    const version = await this.getValue("spec.chart.version");
+    const repo = await this.getValue<string>("spec.chart.repository");
+    const name = await this.getValue<string>("spec.chart.name");
+    const version = await this.getValue<string>("spec.chart.version");
 
     if (!name || !repo || !version) {
       throw new Error(`Invalid release ${this.releasePath}`);
@@ -90,9 +90,9 @@ export class Release {
   }
 
   private async clone(url: string) {
-    const ref = (await this.getValue("spec.chart.ref")) ?? "master";
+    const ref = (await this.getValue<string>("spec.chart.ref")) ?? "master";
 
-    const chartPath = await this.getValue("spec.chart.path");
+    const chartPath = await this.getValue<string>("spec.chart.path");
 
     const dir = await execWithOutput("./src/clone.sh", [
       url,
@@ -103,7 +103,7 @@ export class Release {
     return path.join(dir, chartPath ?? "");
   }
 
-  private getValue(p: string): Promise<string | undefined> {
-    return yq(this.releasePath, p);
+  private async getValue<T>(p: string): Promise<T> {
+    return (await yq(this.releasePath, p)) as T;
   }
 }

@@ -30,9 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: azure/setup-helm@v1
-        with:
-          version: "v3.2.4"
       - name: Validate Helm Releases in test dir
         uses: supplypike/hrval-action@v4.0.0
         with:
@@ -93,9 +90,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: azure/setup-helm@v1
-        with:
-          version: "v3.2.4"
       - name: Validate Helm Releases in test dir
         uses: supplypike/hrval-action@v4.0.0
         with:
@@ -116,9 +110,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: azure/setup-helm@v1
-        with:
-          version: "v3.2.4"
       - name: Validate Helm Releases in test dir
         uses: supplypike/hrval-action@v4.0.0
         with:

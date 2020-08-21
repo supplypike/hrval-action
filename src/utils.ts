@@ -1,8 +1,7 @@
+import { exec } from "@actions/exec";
 import { promises as fs } from "fs";
-
 import yaml from "js-yaml";
 import { get as _get } from "lodash";
-import { exec } from "@actions/exec";
 
 const { readFile, writeFile, stat } = fs;
 
@@ -21,15 +20,12 @@ export async function isFile(path: string): Promise<boolean> {
  */
 export async function yq(
   file: string,
-  path: string
-): Promise<string | undefined> {
-  const doc = yaml.safeLoad(await readFile(file, "utf8"));
+  path: string,
+  read = readFile
+): Promise<unknown> {
+  const doc = yaml.safeLoad(await read(file, "utf8"));
 
-  if (typeof doc === "object") {
-    return _get(doc, path)?.toString();
-  }
-
-  return undefined;
+  return _get(doc, path);
 }
 
 /**
@@ -40,10 +36,13 @@ export async function yq(
  *  await yw("/path/to/file.yaml", someObject)
  * ```
  */
-export async function yw(file: string, content: JSON): Promise<void> {
+export async function yw(
+  file: string,
+  content: Record<string, unknown>,
+  write = writeFile
+): Promise<void> {
   const doc = yaml.safeDump(content);
-
-  await writeFile(file, doc);
+  await write(file, doc);
 }
 
 export async function execWithOutput(

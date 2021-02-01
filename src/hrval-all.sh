@@ -51,7 +51,7 @@ FILES_TESTED=0
 declare -a FOUND_FILES=()
 while read -r file; do
     FOUND_FILES+=( "$file" )
-done < <(find "${DIR}" -type f -name '*.yaml' -o -name '*.yml' | grep -vE $(echo $EXCLUDED_RELEASES | sed 's/[\t\n, ]/|/g'))
+done < <(find "${DIR}" -type f -name '*.yaml' -o -name '*.yml' | grep -vE "$(echo "${EXCLUDED_RELEASES}" | sed 's/[\t\n, ]/|/g')")
 
 for f in "${FOUND_FILES[@]}"; do
   if [[ $(isHelmRelease "${f}") == "true" ]]; then

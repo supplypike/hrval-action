@@ -5,8 +5,7 @@ set -o errexit
 HELM_RELEASE="${1}"
 IGNORE_VALUES="${2}"
 KUBE_VER="${3-master}"
-HELM_VER="${4-v2}"
-CACHEDIR="${5-""}"
+CACHEDIR="${4-""}"
 
 if test ! -f "${HELM_RELEASE}"; then
   echo "\"${HELM_RELEASE}\" Helm release file not found!"
@@ -33,16 +32,9 @@ function download {
 
   CHART_REPO_MD5=$(/bin/echo "${CHART_REPO}" | /usr/bin/md5sum | cut -f1 -d" ")
 
-  if [[ "${HELM_VER}" == "v3" ]]; then
-    helmv3 repo add "${CHART_REPO_MD5}" "${CHART_REPO}"
-    helmv3 repo update
-    helmv3 fetch --version "${CHART_VERSION}" --untar "${CHART_REPO_MD5}/${CHART_NAME}" --untardir "${2}"
-  else
-    helm repo add "${CHART_REPO_MD5}" "${CHART_REPO}"
-    helm repo update
-    helm fetch --version "${CHART_VERSION}" --untar "${CHART_REPO_MD5}/${CHART_NAME}" --untardir "${2}"
-  fi
-
+  helmv3 repo add "${CHART_REPO_MD5}" "${CHART_REPO}"
+  helmv3 repo update
+  helmv3 fetch --version "${CHART_VERSION}" --untar "${CHART_REPO_MD5}/${CHART_NAME}" --untardir "${2}"
   echo "${CHART_DIR}"
 }
 
@@ -108,7 +100,7 @@ function retrieve_sources {
       # Retrieve files directly into tempdir
       if [[ -z "${CHART_PATH}" ]]; then
         >&2 echo "Downloading to ${TMPDIR}"
-        CHART_DIR=$(download "${HELM_RELEASE}" "${TMPDIR}" "${HELM_VER}" | tail -n1)
+        CHART_DIR=$(download "${HELM_RELEASE}" "${TMPDIR}" | tail -n1)
       else
         >&2 echo "Cloning to ${TMPDIR}"
         CHART_DIR=$(clone "${HELM_RELEASE}" "${TMPDIR}" "${HRVAL_HEAD_BRANCH}" "${HRVAL_BASE_BRANCH}" | tail -n1)
@@ -130,7 +122,7 @@ function retrieve_sources {
         if [[ ! -d ${CHART_LOCAL_PATH} ]]; then
           mkdir -p "${CHART_LOCAL_PATH}"
           >&2 echo "Downloading to ${CHART_LOCAL_PATH}"
-          CHART_DIR=$(download "${HELM_RELEASE}" "${CHART_LOCAL_PATH}" "${HELM_VER}" | tail -n1)
+          CHART_DIR=$(download "${HELM_RELEASE}" "${CHART_LOCAL_PATH}" | tail -n1)
         else
           >&2 echo "Using cached sources from ${CHART_LOCAL_PATH}"
           CHART_DIR="${CHART_LOCAL_PATH}/${CHART_NAME}"
@@ -196,23 +188,14 @@ function validate {
   fi
 
   echo "Writing Helm release to ${TMPDIR}/${HELM_RELEASE_NAME}.release.yaml"
-  if [[ ${HELM_VER} == "v3" ]]; then
-    if [[ "${CHART_PATH}" ]]; then
-      helmv3 dependency build "${CHART_DIR}"
-    fi
-    helmv3 template "${HELM_RELEASE_NAME}" "${CHART_DIR}" \
-      --namespace "${HELM_RELEASE_NAMESPACE}" \
-      --skip-crds=true \
-      -f "${TMPDIR}/${HELM_RELEASE_NAME}.values.yaml" > "${TMPDIR}/${HELM_RELEASE_NAME}.release.yaml"
-  else
-    if [[ "${CHART_PATH}" ]]; then
-      helm dependency build "${CHART_DIR}"
-    fi
-    helm template "${CHART_DIR}" \
-      --name "${HELM_RELEASE_NAME}" \
-      --namespace "${HELM_RELEASE_NAMESPACE}" \
-      -f "${TMPDIR}/${HELM_RELEASE_NAME}.values.yaml" > "${TMPDIR}/${HELM_RELEASE_NAME}.release.yaml"
+  if [[ "${CHART_PATH}" ]]; then
+    helmv3 repo add stable https://charts.helm.sh/stable
+    helmv3 dependency build "${CHART_DIR}"
   fi
+  helmv3 template "${HELM_RELEASE_NAME}" "${CHART_DIR}" \
+    --namespace "${HELM_RELEASE_NAMESPACE}" \
+    --skip-crds=true \
+    -f "${TMPDIR}/${HELM_RELEASE_NAME}.values.yaml" > "${TMPDIR}/${HELM_RELEASE_NAME}.release.yaml"
 
   echo "Validating Helm release ${HELM_RELEASE_NAME}.${HELM_RELEASE_NAMESPACE} against Kubernetes ${KUBE_VER}"
   kubeval --strict --ignore-missing-schemas --kubernetes-version "${KUBE_VER}" "${TMPDIR}/${HELM_RELEASE_NAME}.release.yaml"

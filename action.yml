@@ -39,7 +39,6 @@ runs:
     - ${{ inputs.helmRelease }}
     - ${{ inputs.ignoreValues }}
     - ${{ inputs.kubernetesVersion }}
-    - ${{ inputs.helmVersion }}
     - ${{ inputs.awsS3Repo }}
     - ${{ inputs.awsS3RepoName }}
     - ${{ inputs.awsS3RepoPlugin }}

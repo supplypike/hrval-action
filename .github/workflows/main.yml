@@ -44,7 +44,7 @@ jobs:
         with:
           helmRelease: test/
           excludedReleases: |
-            test/subdirectory/redis.yaml
+            test/subdirectory/ghost.yaml
             test/flagger.yaml
       - name: Check tested file count
         env:

@@ -36,4 +36,19 @@ jobs:
         env:
           NUM_FILES_TESTED: ${{ steps.validate-dir.outputs.numFilesTested }}
         run: "(( NUM_FILES_TESTED==3 ))"
-
+  test-dir-ignore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Validate all Helm Releases in the test dir
+        id: validate-dir
+        uses: ./
+        with:
+          helmRelease: test/
+          excludedReleases: |
+            subdirectory/ghost.yaml
+            flagger.yaml
+      - name: Check tested file count
+        env:
+          NUM_FILES_TESTED: ${{ steps.validate-dir.outputs.numFilesTested }}
+        run: "(( NUM_FILES_TESTED==1 ))"

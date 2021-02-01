@@ -48,10 +48,15 @@ function isHelmRelease {
 # Find yaml files in directory recursively
 FILES_TESTED=0
 
+IGNORE_ARGS=""
+for path in $EXCLUDED_RELEASES; do
+  IGNORE_ARGS+="-not -path $path "
+done
+
 declare -a FOUND_FILES=()
 while read -r file; do
     FOUND_FILES+=( "$file" )
-done < <(find "${DIR}" -type f -name '*.yaml' -o -name '*.yml' | grep -vE "$(echo "${EXCLUDED_RELEASES}" | sed 's/[\t\n, ]/|/g')")
+done < <(find "${DIR}" -type f \( -name '*.yaml' -o -name '*.yml' \) $IGNORE_ARGS)
 
 for f in "${FOUND_FILES[@]}"; do
   if [[ $(isHelmRelease "${f}") == "true" ]]; then

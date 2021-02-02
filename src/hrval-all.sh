@@ -5,21 +5,17 @@ set -o errexit
 DIR=${1}
 IGNORE_VALUES=${2-false}
 KUBE_VER=${3-master}
-HELM_VER=${4-v2}
 HRVAL="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/hrval.sh"
-AWS_S3_REPO=${5-false}
-AWS_S3_REPO_NAME=${6-""}
-AWS_S3_PLUGIN="${7-""}"
-HELM_SOURCES_CACHE_ENABLED=${8-""}
+AWS_S3_REPO=${4-false}
+AWS_S3_REPO_NAME=${5-""}
+AWS_S3_PLUGIN="${6-""}"
+HELM_SOURCES_CACHE_ENABLED=${7-""}
+EXCLUDED_RELEASES="${8-""}"
 
 if [ "${HELM_SOURCES_CACHE_ENABLED}" == "true" ]; then
   CACHEDIR=$(mktemp -d)
 else
   CACHEDIR="${CACHEDIR}"
-fi
-
-if [[ ${HELM_VER} == "v2" ]]; then
-    helm init --client-only
 fi
 
 if [[ ${AWS_S3_REPO} == true ]]; then
@@ -30,7 +26,7 @@ fi
 
 # If the path provided is actually a file, just run hrval against this one file
 if test -f "${DIR}"; then
-  ${HRVAL} "${DIR}" "${IGNORE_VALUES}" "${KUBE_VER}" "${HELM_VER}" "${CACHEDIR}"
+  ${HRVAL} "${DIR}" "${IGNORE_VALUES}" "${KUBE_VER}" "${CACHEDIR}"
   exit 0
 fi
 
@@ -51,14 +47,20 @@ function isHelmRelease {
 
 # Find yaml files in directory recursively
 FILES_TESTED=0
+
+declare -a IGNORE_ARGS=()
+for path in $EXCLUDED_RELEASES; do
+  IGNORE_ARGS+=( "-not" "-path" "$path" )
+done
+
 declare -a FOUND_FILES=()
 while read -r file; do
     FOUND_FILES+=( "$file" )
-done < <(find "${DIR}" -type f -name '*.yaml' -o -name '*.yml')
+done < <(find "${DIR}" -type f \( -name '*.yaml' -o -name '*.yml' \) "${IGNORE_ARGS[@]}" )
 
 for f in "${FOUND_FILES[@]}"; do
   if [[ $(isHelmRelease "${f}") == "true" ]]; then
-    ${HRVAL} "${f}" "${IGNORE_VALUES}" "${KUBE_VER}" "${HELM_VER}" "${CACHEDIR}"
+    ${HRVAL} "${f}" "${IGNORE_VALUES}" "${KUBE_VER}" "${CACHEDIR}"
     FILES_TESTED=$(( FILES_TESTED+1 ))
   else
     echo "Ignoring ${f} not a HelmRelease"

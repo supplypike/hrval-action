@@ -14,9 +14,6 @@ inputs:
   kubernetesVersion:
     description: 'Version of Kubernetes to validate against'
     default: 'master'
-  helmVersion:
-    description: 'Version of Helm to validate against'
-    default: 'v2'
   awsS3Repo:
     description: '(Optional) Set to true if using an AWS S3 Helm Repo'
     default: false
@@ -29,6 +26,8 @@ inputs:
   helmSourcesCacheEnabled:
     description: '(Optional) Enabled Helm source caching, so same release or ref will not be downloaded twice.'
     default: 'false'
+  excludedReleases:
+    description: "(Optional) List of releases to ignore"
 outputs:
   numFilesTested:
     description: The number of HelmRelease files which were tested
@@ -40,8 +39,8 @@ runs:
     - ${{ inputs.helmRelease }}
     - ${{ inputs.ignoreValues }}
     - ${{ inputs.kubernetesVersion }}
-    - ${{ inputs.helmVersion }}
     - ${{ inputs.awsS3Repo }}
     - ${{ inputs.awsS3RepoName }}
     - ${{ inputs.awsS3RepoPlugin }}
     - ${{ inputs.helmSourcesCacheEnabled }}
+    - ${{ inputs.excludedReleases }}

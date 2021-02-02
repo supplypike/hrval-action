@@ -8,7 +8,7 @@ spec:
   releaseName: ghost
   chart:
     git: https://github.com/fluxcd/flux-get-started
-    ref: master
+    ref: 778e3de
     path: charts/ghost
   values:
     image:

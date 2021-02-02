@@ -50,12 +50,12 @@ function fetch {
 }
 
 function copy_local {
-  CHART_PATH=$(yq r ${1} spec.chart.path)
+  CHART_PATH=$(yq r "${1}" spec.chart.path)
   DEST_PATH=${2}/${CHART_PATH}
-  mkdir -p ${DEST_PATH}
-  cp -ar ${GITHUB_WORKSPACE}/${CHART_PATH}/. ${DEST_PATH}
+  mkdir -p "${DEST_PATH}"
+  cp -ar "${GITHUB_WORKSPACE}"/"${CHART_PATH}"/. "${DEST_PATH}"
  
-  echo ${DEST_PATH}
+  echo "${DEST_PATH}"
 }
 
 function clone {
@@ -161,19 +161,19 @@ function validate {
   fi
 
   TMPDIR=$(mktemp -d)
-  CHART_PATH=$(yq r ${HELM_RELEASE} spec.chart.path)
-  GIT_REPO=$(yq r ${HELM_RELEASE} spec.chart.git)
-  GIT_REF=$(yq r ${HELM_RELEASE} spec.chart.ref)
+  CHART_PATH=$(yq r "${HELM_RELEASE}" spec.chart.path)
+  GIT_REPO=$(yq r "${HELM_RELEASE}" spec.chart.git)
+  GIT_REF=$(yq r "${HELM_RELEASE}" spec.chart.ref)
 
   if [[ -z "${CHART_PATH}" ]]; then
     echo "Downloading to ${TMPDIR}"
-    CHART_DIR=$(download ${HELM_RELEASE} ${TMPDIR}| tail -n1)
-  elif echo $GIT_REPO | grep $GITHUB_REPOSITORY; then
+    CHART_DIR=$(download "${HELM_RELEASE}" "${TMPDIR}"| tail -n1)
+  elif echo "$GIT_REPO" | grep "$GITHUB_REPOSITORY"; then
     echo "Copying local to ${TMPDIR}"
-    CHART_DIR=$(copy_local ${HELM_RELEASE} ${TMPDIR}| tail -n1)
+    CHART_DIR=$(copy_local "${HELM_RELEASE}" "${TMPDIR}"| tail -n1)
   else
     echo "Cloning to ${TMPDIR}"
-    CHART_DIR=$(clone ${HELM_RELEASE} ${TMPDIR}| tail -n1)
+    CHART_DIR=$(clone "${HELM_RELEASE}" "${TMPDIR}"| tail -n1)
   fi
 
   HELM_RELEASE_NAME=$(yq r "${HELM_RELEASE}" metadata.name)

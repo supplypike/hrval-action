@@ -1,8 +1,7 @@
 # hrval-action
 
-![CI](https://github.com/stefanprodan/hrval-action/workflows/CI/badge.svg)
-[![Docker](https://img.shields.io/badge/Docker%20Hub-stefanprodan%2Fhrval-blue)](https://hub.docker.com/r/stefanprodan/hrval)
-[![GitHub Super-Linter](https://github.com/stefanprodan/hrval-action/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
+![CI](https://github.com/supplypike/hrval-action/workflows/CI/badge.svg)
+[![GitHub Super-Linter](https://github.com/supplypike/hrval-action/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 This GitHub action validates a Flux
 [Helm Release](https://docs.fluxcd.io/projects/helm-operator/en/latest/references/helmrelease-custom-resource.html)
@@ -76,7 +75,9 @@ PASS - flagger/templates/deployment.yaml contains a valid Deployment
 ## Usage with private charts repositories
 
 To allow the action to be able to clone private charts repositories,
-you must [create a GitHub private access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) and [add it as a secret](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets#creating-encrypted-secrets) to the target repository. NOTE: secret names *cannot* start with `GITHUB_` as these are reserved.
+you must [create a GitHub private access token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
+and [add it as a secret](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets#creating-encrypted-secrets) to the target repository.
+NOTE: secret names *cannot* start with `GITHUB_` as these are reserved.
 
 You can then pass the secret (in this case, `GH_TOKEN`) into the action like so:
 ```yaml
